@@ -1,0 +1,181 @@
+<script>
+    // Konfiguracja
+    const API_URL = 'https://assistics.up.railway.app';
+    const sessionId = 'sesja_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+    // Elementy DOM (te same co wcześniej)
+    const header = document.getElementById('chat-header');
+    const body = document.getElementById('chat-body');
+    const toggleIcon = document.getElementById('chat-toggle');
+    const messagesDiv = document.getElementById('chat-messages');
+    const input = document.getElementById('chat-input');
+    const sendBtn = document.getElementById('chat-send');
+
+    let isOpen = true;
+    let puterReady = false;
+
+    // Funkcja dodawania wiadomości (ta sama)
+    function addMessage(text, sender) {
+        const msgDiv = document.createElement('div');
+        msgDiv.style.maxWidth = '80%';
+        msgDiv.style.padding = '10px 15px';
+        msgDiv.style.borderRadius = '15px';
+        msgDiv.style.wordWrap = 'break-word';
+        msgDiv.style.marginBottom = '5px';
+        
+        if (sender === 'user') {
+            msgDiv.style.alignSelf = 'flex-end';
+            msgDiv.style.backgroundColor = '#667eea';
+            msgDiv.style.color = 'white';
+            msgDiv.style.marginLeft = 'auto';
+            msgDiv.style.borderBottomRightRadius = '5px';
+        } else {
+            msgDiv.style.alignSelf = 'flex-start';
+            msgDiv.style.backgroundColor = 'white';
+            msgDiv.style.color = '#333';
+            msgDiv.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+            msgDiv.style.borderBottomLeftRadius = '5px';
+        }
+        
+        msgDiv.textContent = text;
+        messagesDiv.appendChild(msgDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Załaduj Puter.js
+    function loadPuterJS() {
+        return new Promise((resolve, reject) => {
+            if (window.puter) {
+                resolve();
+                return;
+            }
+            
+            const script = document.createElement('script');
+            script.src = 'https://js.puter.com/v2/';
+            script.async = true;
+            script.onload = () => {
+                console.log('✅ Puter.js loaded');
+                puterReady = true;
+                resolve();
+            };
+            script.onerror = () => {
+                console.error('❌ Failed to load Puter.js');
+                reject(new Error('Failed to load Puter.js'));
+            };
+            document.head.appendChild(script);
+        });
+    }
+
+    // Funkcja wysyłania wiadomości przez Puter.js
+    async function sendMessage() {
+        const text = input.value.trim();
+        if (!text) return;
+
+        input.value = '';
+        addMessage(text, 'user');
+
+        // Pokaż indicator
+        const typingId = 'typing_' + Date.now();
+        const typingDiv = document.createElement('div');
+        typingDiv.id = typingId;
+        typingDiv.style.maxWidth = '80%';
+        typingDiv.style.padding = '10px 15px';
+        typingDiv.style.borderRadius = '15px';
+        typingDiv.style.backgroundColor = 'white';
+        typingDiv.style.color = '#999';
+        typingDiv.style.boxShadow = '0 2px 5px rgba(0,0,0,0.05)';
+        typingDiv.style.alignSelf = 'flex-start';
+        typingDiv.style.borderBottomLeftRadius = '5px';
+        typingDiv.innerHTML = '✎ Asystent pisze...';
+        messagesDiv.appendChild(typingDiv);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+        try {
+            // Upewnij się, że Puter.js jest załadowany
+            if (!puterReady) {
+                await loadPuterJS();
+            }
+
+            // Wywołaj Puter.js AI bezpośrednio z przeglądarki
+            const response = await window.puter.ai.chat(text, {
+                model: 'upstage/solar-pro-3', // Dobry model dla polskiego
+                system_prompt: `Jesteś inżynierem wsparcia technicznego dla systemów bezpieczeństwa na stacjach benzynowych w Polsce.
+Twoja specjalizacja: szlabany, kamery, alarmy, kontrola dostępu.
+Odpowiadaj TYLKO po polsku, krótko i konkretnie.
+Zawsze zaczynaj od diagnostyki: sprawdź zasilanie, kable, połączenia.`
+            });
+
+            document.getElementById(typingId)?.remove();
+
+            // Wyciągnij odpowiedź z różnych formatów Puter.js
+            let reply = '';
+            if (typeof response === 'string') {
+                reply = response;
+            } else if (response?.message?.content) {
+                reply = response.message.content;
+            } else if (response?.text) {
+                reply = response.text;
+            } else if (response?.content) {
+                reply = response.content;
+            } else {
+                reply = JSON.stringify(response);
+            }
+
+            addMessage(reply, 'bot');
+
+        } catch (error) {
+            console.error('Puter.js error:', error);
+            document.getElementById(typingId)?.remove();
+            
+            let errorMsg = '❌ Błąd połączenia. ';
+            if (error.message.includes('Puter.js not loaded')) {
+                errorMsg += 'Nie można załadować Puter.js. Odśwież stronę.';
+            } else if (error.message.includes('authentication')) {
+                errorMsg += 'Wymagane logowanie do Puter. Kliknij tutaj aby się zalogować.';
+                // Możesz dodać przycisk logowania
+            } else {
+                errorMsg += 'Spróbuj ponownie później.';
+            }
+            addMessage(errorMsg, 'bot');
+        }
+    }
+
+    // Obsługa zdarzeń (bez zmian)
+    header.addEventListener('click', () => {
+        if (isOpen) {
+            body.style.display = 'none';
+            toggleIcon.textContent = '▲';
+        } else {
+            body.style.display = 'flex';
+            toggleIcon.textContent = '▼';
+        }
+        isOpen = !isOpen;
+    });
+
+    sendBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sendMessage();
+    });
+
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    body.addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
+    // Załaduj Puter.js przy starcie
+    window.addEventListener('load', async () => {
+        try {
+            await loadPuterJS();
+            addMessage('Cześć! 👋 Jestem asystentem technicznym (Puter.js). Opisz swój problem, a postaram się pomóc.', 'bot');
+        } catch (error) {
+            console.error('Failed to initialize:', error);
+            addMessage('❌ Nie można załadować asystenta. Odśwież stronę lub spróbuj później.', 'bot');
+        }
+    });
+</script>
