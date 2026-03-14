@@ -23,7 +23,7 @@
 
         .chat-container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 900px;
             height: 90vh;
             background: white;
             border-radius: 24px;
@@ -181,7 +181,6 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
-            margin-bottom: 8px;
         }
 
         .example-btn {
@@ -216,13 +215,13 @@
             <h1>🔒 Wsparcie Techniczne AZS</h1>
             <p>Systemy bezpieczeństwa • Monitoring • Alarmy • Kontrola dostępu</p>
             <div class="badge-container">
-                <span class="badge">Bosch DIVAR/DIP</span>
+                <span class="badge">Bosch</span>
                 <span class="badge">Hikvision</span>
+                <span class="badge">Paradox</span>
+                <span class="badge">Satel</span>
+                <span class="badge">Rosslare</span>
                 <span class="badge">3xLogic</span>
-                <span class="badge">Provision-ISR</span>
-                <span class="badge">Paradox EVO192</span>
-                <span class="badge">Satel Integra</span>
-                <span class="badge">Rosslare B32</span>
+                <span class="badge">Provision</span>
             </div>
         </div>
 
@@ -244,11 +243,11 @@
         (function() {
             'use strict';
 
-            // Konfiguracja – adres backendu
+            // Konfiguracja – adres backendu (Railway)
             const API_URL = 'https://assistics.up.railway.app/chat';
-            // Generuj lub odczytaj identyfikator sesji (przechowuj w pamięci na czas trwania strony)
-            // Dla trwałości możesz użyć localStorage, ale tu wystarczy na czas jednej sesji przeglądarki.
-            const sessionId = 'sesja_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+
+            // Generuj unikalny identyfikator sesji (przechowywany w pamięci na czas trwania strony)
+            const sessionId = 'sesja_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 
             // Elementy DOM
             const messagesDiv = document.getElementById('chat-messages');
@@ -256,7 +255,7 @@
             const sendButton = document.getElementById('send-button');
             const examplesContainer = document.getElementById('example-buttons');
 
-            // Przykładowe pytania (dostosowane do rzeczywistych problemów użytkowników)
+            // Przykładowe pytania (dostosowane do rzeczywistych problemów)
             const examples = [
                 'Kamera nie wyświetla obrazu',
                 'Jak zmienić kod w Rosslare?',
@@ -297,18 +296,15 @@
             // Funkcja wysyłająca zapytanie do backendu
             async function sendMessage(text) {
                 if (isSending) return;
-                const trimmed = text.trim();
-                if (!trimmed) return;
+                if (!text.trim()) return;
 
                 isSending = true;
                 input.disabled = true;
                 sendButton.disabled = true;
 
-                // Dodaj wiadomość użytkownika
-                addMessage(trimmed, 'user');
+                addMessage(text, 'user');
                 input.value = '';
 
-                // Pokaż wskaźnik pisania
                 showTypingIndicator();
 
                 try {
@@ -318,7 +314,7 @@
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({ 
-                            message: trimmed,
+                            message: text,
                             session_id: sessionId 
                         }),
                     });
@@ -326,12 +322,7 @@
                     removeTypingIndicator();
 
                     if (!response.ok) {
-                        let errorDetail = '';
-                        try {
-                            const errorData = await response.json();
-                            errorDetail = errorData.detail || '';
-                        } catch (e) {}
-                        throw new Error(`HTTP ${response.status} ${errorDetail}`);
+                        throw new Error(`HTTP ${response.status}`);
                     }
 
                     const data = await response.json();
@@ -343,13 +334,7 @@
                 } catch (error) {
                     console.error('Błąd połączenia:', error);
                     removeTypingIndicator();
-                    let errorMsg = '❌ Błąd połączenia. ';
-                    if (error.message.includes('Failed to fetch')) {
-                        errorMsg += 'Sprawdź połączenie z internetem.';
-                    } else {
-                        errorMsg += 'Serwer może być chwilowo niedostępny.';
-                    }
-                    addMessage(errorMsg, 'bot', true);
+                    addMessage('❌ Błąd połączenia. Sprawdź sieć i spróbuj ponownie.', 'bot', true);
                 } finally {
                     isSending = false;
                     input.disabled = false;
@@ -373,10 +358,8 @@
 
             // Inicjalizacja – przywitanie i przyciski przykładowych pytań
             function init() {
-                // Wiadomość powitalna
-                addMessage('Cześć! 👋 Jestem asystentem technicznym. Opisz swój problem związany z monitoringu, alarmem lub kontrolą dostępu. Postaram się pomóc.', 'bot');
+                addMessage('Cześć! 👋 Jestem asystentem technicznym. Opisz swój problem związany z monitoringiem, alarmem lub kontrolą dostępu. Postaram się pomóc.', 'bot');
 
-                // Generowanie przycisków z przykładami
                 examples.forEach(ex => {
                     const btn = document.createElement('button');
                     btn.className = 'example-btn';
@@ -388,7 +371,6 @@
                     examplesContainer.appendChild(btn);
                 });
 
-                // Odblokowanie interfejsu (zakładamy, że backend jest gotowy)
                 input.disabled = false;
                 sendButton.disabled = false;
                 input.focus();
