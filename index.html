@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Techniczna pomoc AZS</title>
+    <title>AI assistant</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -441,7 +441,7 @@
             </div>
             <div class="examples" id="example-buttons"></div>
             <div class="footer-note">
-                <i class="far fa-lightbulb"></i> Odpowiadamy prostymi krokami. Jeśli problem nie ustąpi – skontaktuj się z serwisem.
+                <i class="far fa-lightbulb"></i> Jeśli problem nie ustąpi – skontaktuj się z serwisem.
             </div>
         </div>
     </div>
@@ -455,7 +455,7 @@
 
             const SUPPORTED_SYSTEMS = [
                 'Bosch', 'Hikvision', 'Paradox', 'Satel', 'Rosslare',
-                '3xLogic', 'Provision', 'Siemens', 'Babyware'
+                '3xLogic', 'Provision', 'Siemens'
             ];
 
             const EXAMPLES = [
@@ -463,8 +463,7 @@
                 'Jak zmienić kod w Rosslare?',
                 'Alarm ciągle się włącza',
                 'Nie mogę uzbroić systemu Paradox',
-                'Brak nagrań z kamery Hikvision',
-                'Czytnik kart nie reaguje',
+                'Brak nagrań',
                 'Zmiana kodu użytkownika w Satel'
             ];
 
@@ -560,7 +559,7 @@
                 });
 
                 addMessage(
-                    'Cześć! 👋 Jestem inżynierem wsparcia. Opisz problem, a podam proste kroki.',
+                    'Cześć! Jestem inżynierem wsparcia. Opisz problem, a podam proste kroki.',
                     'bot'
                 );
 
